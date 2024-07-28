@@ -1,0 +1,17 @@
+/* styles.css */
+
+.input-focus {
+  border-color: blue; /* Default border color */
+}
+
+.input-focus:focus {
+  border-color: green; /* Default focus border color */
+}
+
+.input-error {
+  border-color: red; /* Error border color */
+}
+
+.input-error:focus {
+  border-color: darkred; /* Error focus border color */
+}
