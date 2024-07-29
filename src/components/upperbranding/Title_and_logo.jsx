@@ -13,9 +13,7 @@ export default function Title_and_logo() {
         backgroundColor: "blue",
       }}
     >
-      <h1 style={{ margin: "0", padding: "0", color: "white" }}>
-        Faction Computer Education
-      </h1>
+      <h1 style={{ margin: "0", padding: "0", color: "white" }}></h1>
     </div>
   );
 }

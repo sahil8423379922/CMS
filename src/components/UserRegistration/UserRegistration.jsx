@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Button, ButtonGroup } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
 import QualificationTable from "./QuallificationDetails";
 import style from "./css/UserRegistration.module.css";
+import { addDoc, collection, doc, getDocs, setDoc } from "firebase/firestore";
+import { db } from "../auth/firebase";
 
 export default function UserRegistration() {
   const [name, setName] = useState("");
@@ -21,6 +23,8 @@ export default function UserRegistration() {
   const [rfees, setRegistrationfees] = useState("");
   const [fees, setFees] = useState("");
   const [qua, setQua] = useState("");
+  const [stuId, setStudentID] = useState();
+  const [studentStatus, setStudentStatus] = useState("");
 
   // State for alert
   const [showAlert, setShowAlert] = useState(false);
@@ -30,13 +34,50 @@ export default function UserRegistration() {
     setQua(qualifications);
   };
 
+  // Function to get the next document ID
+  const getNextDocumentId = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "StudentInfo"));
+      const numDocs = snapshot.size;
+      setStudentID(numDocs + 1);
+      //return numDocs + 1;
+    } catch (error) {
+      console.error("Error getting document count: ", error);
+      throw error;
+    }
+  };
+
+  const addDataToFirestore = async (data) => {
+    try {
+      const docRef = doc(db, "StudentInfo", stuId.toString());
+      await setDoc(docRef, data);
+      console.log("Document written with ID: ", nextId);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+  };
+
+  const sendRTDBData = (path, data) => {
+    // database
+    //   .ref(path)
+    //   .set(data)
+    //   .then(() => {
+    //     console.log("Data sent successfully");
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error sending data:", error);
+    //   });
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
     let message = "";
 
     // Validation rules
-    if (name.trim() === "") {
+    if (studentStatus.trim === "") {
+      message += "Please select the Stuent Status\n";
+    } else if (name.trim() === "") {
       message += "Please enter the First Name.\n";
     } else if (lname.trim() === "") {
       message += "Please enter the Last Name.\n";
@@ -56,6 +97,8 @@ export default function UserRegistration() {
       message += "Please enter the Mother Name.\n";
     } else if (occupation.trim() === "") {
       message += "Please enter the Occupation.\n";
+    } else if (fathercontact.trim() === "") {
+      message += "Please enter the Contact Number.\n";
     } else if (duration.trim() === "") {
       message += "Please enter the Duration.\n";
     } else if (rfees.trim() === "") {
@@ -64,6 +107,38 @@ export default function UserRegistration() {
       message += "Please enter the Monthly Fees.\n";
     } else {
       setShowAlert(false);
+
+      const data = {
+        FirstName: name,
+        LastName: lname,
+        dob: dob,
+        Contact: contact,
+        Category: category,
+        Gender: gender,
+        BloodGroup: bloodgroup,
+        Father: father,
+        Mother: mother,
+        Occupation: occupation,
+        FatherContact: fathercontact,
+        Course: course,
+        Duration: duration,
+        RegistrationFees: rfees,
+        MonthlyFees: fees,
+        Quallification: qua,
+      };
+
+      //Set Status Acknowledgement
+      if (studentStatus === "Active") {
+        console.log("Student is active");
+        sendRTDBData("StudentInfo/active", { stuId: name + " " + lname });
+      } else {
+        console.log("Student is not active");
+        sendRTDBData("StudentInfo/notactive", { stuId: name + " " + lname });
+      }
+
+      //sendind data to store
+      addDataToFirestore(data);
+
       console.log("Name =", name);
       console.log("lname =", lname);
       console.log("dob =", dob);
@@ -90,12 +165,66 @@ export default function UserRegistration() {
     }
   };
 
+  //fetching student ID on the start of the application
+  useEffect(() => {
+    getNextDocumentId();
+  }, []);
+
+  const handleReset = () => {
+    setName("");
+    setLname("");
+    setDob("");
+    setContact("");
+    setCategory("");
+    setGender("");
+    setBloodgroup("");
+    setFather("");
+    setMother("");
+    setOccupation("");
+    setFathercontact("");
+    setCourse("");
+    setDuration("");
+    setRegistrationfees("");
+    setFees("");
+    setQua("");
+    setShowAlert(false);
+    setAlertMessage("");
+    setQua([]);
+  };
+
   return (
     <>
       <div style={{ backgroundColor: "#FFFDD0" }} className="pt-5 pb-5">
         <div className="container p-5 " style={{ backgroundColor: "white" }}>
           <Form>
+            <Form.Group className="mb-3" controlId="formBasicEmail">
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+              >
+                <Form.Group>
+                  <Form.Label>First Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Student Registration ID"
+                    value={"FCE/01/" + stuId}
+                    disabled // This makes the field non-editable
+                  />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.Label>Select Status</Form.Label>
+                  <Form.Select
+                    onChange={(data) => setStudentStatus(data.target.value)}
+                    value={category}
+                  >
+                    <option>Active</option>
+                    <option>Not Active</option>
+                  </Form.Select>
+                </Form.Group>
+              </div>
+            </Form.Group>
             <h3>Basic Details</h3>
+
             <div className="row">
               <div className="col-md-6">
                 <Form.Group className="mb-3" controlId="formBasicEmail">
@@ -338,7 +467,7 @@ export default function UserRegistration() {
                 >
                   Submit
                 </Button>
-                <Button variant="primary" type="button">
+                <Button variant="primary" type="button" onClick={handleReset}>
                   Reset
                 </Button>
               </center>
